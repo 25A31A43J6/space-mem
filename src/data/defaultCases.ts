@@ -1,0 +1,948 @@
+import { HistoricalFailureCase } from '../types/spaceMem.ts';
+
+export const DEFAULT_FAILURE_CASES: HistoricalFailureCase[] = [
+  {
+    id: 'CASE-001',
+    satellite: 'AeroSat-4B',
+    subsystem: 'Electrical Power (EPS)',
+    component: 'Power Control & Distribution Unit (PCDU) - Main Bus Converter',
+    componentType: 'GaN MOSFET Buck-Boost Switcher Stage',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2024-03-12',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'CRITICAL',
+    failureMode: 'Main Bus 28V Undervoltage Lockout & Resonant Oscillation',
+    testConditions: {
+      temperature: -25,
+      voltage: 23.4,
+      current: 14.8,
+      pressure: '1.2e-6 Torr',
+      vibration: '0.0 g RMS (Static TVAC)',
+      duration: '48 hrs cold soak plateau',
+      environmentalNotes: 'Chamber cryogenic shroud at -180°C, test article stabilization soak'
+    },
+    telemetryReadings: {
+      'bus_voltage_v': 23.4,
+      'nominal_bus_v': 28.0,
+      'ripple_peak_mv': 680,
+      'gate_drive_freq_khz': 120,
+      'phase_margin_deg': 14.2,
+      'shunt_current_a': 14.8
+    },
+    symptoms: [
+      'Main regulated 28V spacecraft bus dropped to 23.4V triggering UVLO threshold (24.0V)',
+      'Severe 680mV high-frequency voltage ripple on telemetry channel EPS_BUS_VMON',
+      'Anomaly only occurred when baseplate cooled below -18°C under hard vacuum',
+      'Telemetry dropout on downstream instruments due to power supply restart cycles'
+    ],
+    errorCodes: ['ERR-PWR-4029', 'FAULT_BUS_UVLO_ASSERT', 'PCDU_REG_INSTABILITY'],
+    investigation: {
+      initialHypothesis: 'External test GSE cable harness impedance or cryogenic harness resistance degradation.',
+      diagnosticSteps: [
+        'Checked chamber feedthrough connectors and GSE load bank impedance',
+        'Replaced vacuum chamber umbilical power harness (Did NOT resolve issue)',
+        'Mounted high-bandwidth passive oscilloscopes on PCDU switching gate nodes',
+        'Performed temperature-step ramping from -30°C to +20°C inside chamber'
+      ],
+      testsPerformed: [
+        'Bode plot stability analysis across -35°C to +60°C',
+        'Gate driver waveform ring-down analysis under pulsed load steps',
+        'Component parameter sweep on ceramic compensation capacitors'
+      ],
+      findings: 'At -25°C, the internal gate driver damping resistor (4.7Ω) allowed high dV/dt ringing with GaN FET parasitic input capacitance, reducing phase margin from 58° down to 14°, triggering autonomous shutoff.',
+      rootCause: 'MOSFET gate driver damping resistor value (4.7Ω) was inadequate at cryogenic temperatures due to reduced channel resistance and temperature coefficient of gate drivers, leading to undamped parasitic oscillation.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Increased gate drive damping resistor RG from 4.7Ω to 15Ω and adjusted loop compensation capacitor from 1.2nF to 2.2nF COG dielectric.',
+      configurationChange: 'ECR-PCDU-882: Resistor change RG=15Ω; added RC snubber across high-side switch.',
+      result: 'Main bus output ripple dropped from 680mV to 38mV. Phase margin restored to 54° at -30°C.',
+      solved: true,
+      whatWorked: 'Increasing RG damping resistor to 15Ω and adding RC snubber directly eliminated switching oscillation.',
+      whatFailedFirst: 'Replacing the external chamber harness and recalibrating GSE was attempted first—it consumed 36 test hours and completely failed to fix the anomaly.',
+      validationPerformed: 'Completed full 72-hour TVAC qualification cycle down to -35°C with 0-100% transient load step without single dropout.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Always evaluate power converter gate-drive damping and loop stability at worst-case cryogenic boundary temperatures, not merely room temperature.',
+      checkFirstNextTime: 'Probe gate driver ringing and switching node dV/dt directly rather than assuming external GSE harness issues.',
+      flawedAssumptions: 'Engineering team initially assumed external chamber cabling resistance was causing the 4.6V bus drop.',
+      importantWarnings: 'Do not attempt to increase software UVLO trip thresholds to bypass the alarm; the oscillation can destroy gate oxide over extended mission lifetime.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'TVAC Cold Soak UVLO Trip', description: 'Main 28V bus collapsed to 23.4V during hour 14 of -25°C soak.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Telemetry Ripple Alarm', description: 'EPS_BUS_VMON indicated 680mV peak-to-peak ripple and periodic resets.', timestamp: 'T+00:15:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'External Harness Suspected', description: 'Engineering team hypothesized cryogenic harness impedance degradation.', timestamp: 'T+02:00:00', status: 'info' },
+      { step: 'Testing', title: 'Harness Replacement (Failed)', description: 'Chamber harness swapped out. Anomaly persisted identically at -25°C.', timestamp: 'T+18:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'Gate Oscillation Identified', description: 'High-speed oscilloscopes captured 120 kHz resonant ringing on GaN gate node.', timestamp: 'T+24:30:00', status: 'info' },
+      { step: 'Root cause', title: 'Sub-Zero Damping Inadequacy', description: 'Phase margin collapsed to 14° due to temperature coefficient of semiconductor switches.', timestamp: 'T+28:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Resistor RG Upgrade to 15Ω', description: 'Gate damping resistor increased to 15Ω with snubber dampener.', timestamp: 'T+36:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Full TVAC Retest Pass', description: '72-hr continuous soak at -35°C with zero ripple anomalies.', timestamp: 'T+72:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Cryogenic Stability Protocol Logged', description: 'Mandatory cryogenic Bode plot procedure entered into design handbook.', timestamp: 'T+76:00:00', status: 'completed' }
+    ],
+    tags: ['power', 'pcdu', 'tvac', 'cryogenic', 'voltage_instability', 'uvlo', 'eps'],
+    retainedDate: '2024-03-18',
+    hindsightMemoryId: 'mem_pwr_aerosat_001',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-002',
+    satellite: 'Helios-Solar-X',
+    subsystem: 'Thermal Control (TCS)',
+    component: 'Axial Grooved Aluminum-Ammonia Heat Pipe (HP-04)',
+    componentType: 'Constant Conductance Heat Pipe (CCHP)',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2024-05-20',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'HIGH',
+    failureMode: 'Evaporator Dry-Out & High Thermal Resistance',
+    testConditions: {
+      temperature: 68.5,
+      voltage: 28.0,
+      current: 4.2,
+      pressure: '3.4e-6 Torr',
+      vibration: '0.0 g RMS',
+      duration: '36 hrs hot balance test',
+      environmentalNotes: 'Solar simulator flux set to 1.35 Solar Constants'
+    },
+    telemetryReadings: {
+      'evaporator_temp_c': 68.5,
+      'condenser_temp_c': 22.1,
+      'delta_t_c': 46.4,
+      'max_allowed_delta_t': 12.0,
+      'payload_pa_temp_c': 74.2
+    },
+    symptoms: [
+      'Heat pipe evaporator section temperature rose to 68.5°C while condenser remained at 22.1°C',
+      'Thermal gradient across heat pipe reached 46.4°C (flight limit is 12°C)',
+      'X-band Solid State Power Amplifier (SSPA) throttled due to over-temperature alarm'
+    ],
+    errorCodes: ['ERR-TCS-208', 'THERM_GRADIENT_EXCEEDED', 'SSPA_OT_LIMIT'],
+    investigation: {
+      initialHypothesis: 'Thermal interface filler pad (Chomerics) void or uneven bolting torque.',
+      diagnosticSteps: [
+        'Disassembled thermal strap and measured interface pad contact footprint',
+        'Found contact surface torque was nominal (2.4 Nm across all 8 fasteners)',
+        'Conducted infrared thermography along heat pipe active length under bench load'
+      ],
+      testsPerformed: [
+        'Tilt sensitivity test (reflux orientation vs 0-g simulation orientation)',
+        'X-ray radiography inspection of heat pipe condenser reservoir'
+      ],
+      findings: 'Radiography revealed non-condensable gas (hydrogen) bubble trapped at the condenser slug end, blocking 28% of active condensation area.',
+      rootCause: 'Ammonia fluid batch had trace moisture contamination during manufacturing weld sealing, reacting with internal aluminum groove to release hydrogen non-condensable gas over thermal cycling.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Replaced HP-04 with newly certified ultra-pure ammonia lot batch with helium mass-spectrometer leak test certification.',
+      configurationChange: 'Installed serialized HP-04B with verified passivation layer.',
+      result: 'Evaporator to condenser delta-T dropped from 46.4°C to 4.8°C at full 85W thermal dissipation.',
+      solved: true,
+      whatWorked: 'Replacing heat pipe with verified dry-passivated unit completely solved thermal gradient.',
+      whatFailedFirst: 'Re-torquing flange bolts and applying higher-viscosity thermal grease was attempted first, making no measurable improvement.',
+      validationPerformed: 'Completed 12-cycle thermal balance in TVAC; maximum gradient remained < 5.2°C.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'A large thermal gradient across a CCHP is almost always internal gas blockage or fluid dry-out, not contact grease.',
+      checkFirstNextTime: 'Measure temperature profile along the condenser slug to locate non-condensable gas blockage before touching mounting hardware.',
+      flawedAssumptions: 'Assumed mechanical mounting interface had warped during thermal transition.',
+      importantWarnings: 'Do not exceed 85°C bake-out on unvalidated aluminum-ammonia heat pipes.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'SSPA Over-Temp Warning', description: 'Payload amplifier reached 74.2°C during high-sun TVAC run.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Severe HP Delta-T', description: 'Evaporator-to-condenser gradient spiked to 46.4°C.', timestamp: 'T+00:45:00', status: 'critical' },
+      { step: 'Hypothesis', title: 'Thermal Grease Gap Suspected', description: 'Team inspected flange bolting torque and interface pad.', timestamp: 'T+03:00:00', status: 'info' },
+      { step: 'Testing', title: 'Re-Torque Test (No Effect)', description: 'Re-torqued interface to 2.8 Nm; gradient remained identical.', timestamp: 'T+08:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'Radiography Inspection', description: 'X-ray confirmed hydrogen gas slug occupying condenser tip.', timestamp: 'T+14:00:00', status: 'info' },
+      { step: 'Root cause', title: 'Ammonia Moisture Reaction', description: 'Trace moisture reacted with aluminum to liberate hydrogen NCG.', timestamp: 'T+18:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Heat Pipe Replacement', description: 'Replaced with verified high-purity passivated unit HP-04B.', timestamp: 'T+30:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Thermal Balance Verified', description: 'Temperature gradient stabilized at 4.8°C across 12 cycles.', timestamp: 'T+48:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Batch Purity Screening Added', description: 'Gas chromatography screening mandated for heat pipe lots.', timestamp: 'T+52:00:00', status: 'completed' }
+    ],
+    tags: ['thermal', 'heat_pipe', 'tvac', 'temperature_excess', 'tcs', 'dryout'],
+    retainedDate: '2024-05-26',
+    hindsightMemoryId: 'mem_tcs_helios_002',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-003',
+    satellite: 'Orion-Surveyor-3',
+    subsystem: 'Attitude & Orbit Control (ADCS)',
+    component: 'Reaction Wheel Assembly (RWA-2) - High-Momentum Unit',
+    componentType: 'Ironless Brushless DC Motor & Angular Contact Bearings',
+    testType: 'Vibration & Acoustic Test',
+    date: '2024-07-09',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'HIGH',
+    failureMode: 'Tachometer Jitter, Motor Drag Torque Spike & Micro-Vibration',
+    testConditions: {
+      temperature: 21.0,
+      voltage: 28.0,
+      current: 1.85,
+      pressure: '1013 mbar (Ambient shaker table)',
+      vibration: '9.2 g RMS (Random vibration 20 - 2000 Hz, Z-axis)',
+      duration: '180 sec per axis qualification level',
+      environmentalNotes: 'Post-vibration functional spin-up test'
+    },
+    telemetryReadings: {
+      'wheel_speed_rpm': 3240,
+      'speed_jitter_rpm_pp': 142,
+      'motor_current_a': 1.85,
+      'nominal_idle_current_a': 0.32,
+      'drag_torque_mn_m': 16.4,
+      'accelerometer_z_g': 0.88
+    },
+    symptoms: [
+      'Post-vibe spin-up exhibited 142 RPM peak-to-peak tachometer jitter at 3200 RPM',
+      'Idle motor current draw surged from nominal 0.32A to 1.85A',
+      'Micro-vibration sensors detected 420 Hz harmonic resonance coupling into star tracker bench',
+      'ADCS pointing stability control loop reported estimator divergence'
+    ],
+    errorCodes: ['ERR-ADCS-310', 'RWA_SPEED_JITTER', 'DRAG_TORQUE_EXCEEDED'],
+    investigation: {
+      initialHypothesis: 'Bearing brinelling (indentation) on raceway due to shaker over-acceleration.',
+      diagnosticSteps: [
+        'Disassembled flywheel and inspected bearing balls under scanning electron microscope (SEM)',
+        'Bearings showed ZERO raceway pitting or brinelling indentations',
+        'Tested motor resolver tachometer optical disc under laser interferometry'
+      ],
+      testsPerformed: [
+        'Modal tap testing of reaction wheel housing assembly',
+        'Dynamic bearing pre-load Belleville spring deflection measurement'
+      ],
+      findings: 'The axial pre-load wave spring had settled by 0.12mm during random vibration, causing bearing balls to operate in the non-preloaded clearance region with ball skidding at 420 Hz.',
+      rootCause: 'Belleville pre-load spring material (17-7PH) underwent micro-yield relaxation during qualification random vibration profile, losing 40% of bearing axial pre-load.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Replaced 17-7PH wave spring with Inconel 718 heat-treated disc spring stack and added elastomeric vibration isolator damping pads at mounting feet.',
+      configurationChange: 'MOD-RWA-104: Inconel 718 pre-load assembly + titanium isolator brackets.',
+      result: 'Tachometer jitter dropped to 4.2 RPM pp. Current draw returned to 0.34A. No 420 Hz resonance.',
+      solved: true,
+      whatWorked: 'Inconel 718 spring retained 100% pre-load; elastomeric isolators prevented vibe transmissibility.',
+      whatFailedFirst: 'Replacing the tachometer encoder sensor board was initially attempted under assumption of optical encoder glitch; issue remained unchanged.',
+      validationPerformed: 'Subjected RWA to 12.0 g RMS (acceptance + 3dB) followed by 500-hour continuous spin test.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Tachometer jitter in reaction wheels post-vibration is usually mechanical pre-load loss, NOT optical sensor failure.',
+      checkFirstNextTime: 'Measure rotor axial play and bearing pre-load displacement first before touching electronics.',
+      flawedAssumptions: 'Assumed random vibe had damaged optical tachometer glass reticle.',
+      importantWarnings: 'Never calibrate out drag torque increases by increasing motor driver current limits; friction will generate debris and seize in vacuum.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Post-Vibe Spin-Up Anomaly', description: 'RWA-2 drew 1.85A at 3200 RPM with erratic speed telemetry.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Tachometer Jitter Alarm', description: '142 RPM speed fluctuation and 420 Hz micro-vibration observed.', timestamp: 'T+00:20:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Optical Encoder Glitch Assumed', description: 'Electronics team suspected photo-interrupter encoder misalignment.', timestamp: 'T+01:30:00', status: 'info' },
+      { step: 'Testing', title: 'Encoder Board Swap (Failed)', description: 'Encoder board swapped. Jitter and high current remained identical.', timestamp: 'T+06:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'SEM & Axial Play Inspection', description: 'Bearings undamaged, but rotor axial pre-load had reduced by 40%.', timestamp: 'T+12:00:00', status: 'info' },
+      { step: 'Root cause', title: 'Spring Relaxation Yield', description: '17-7PH wave spring underwent micro-yield during random vibration.', timestamp: 'T+16:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Inconel 718 Spring Upgrade', description: 'Installed Inconel 718 high-yield spring stack and tuned isolators.', timestamp: 'T+24:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Over-Test Random Vibration Pass', description: 'Retested at 12 g RMS; speed jitter stayed at 4.2 RPM pp.', timestamp: 'T+40:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Design Rule Updated', description: 'Pre-load spring standard updated across all rotating mechanism specs.', timestamp: 'T+44:00:00', status: 'completed' }
+    ],
+    tags: ['adcs', 'reaction_wheel', 'vibration', 'jitter', 'drag_torque', 'bearings'],
+    retainedDate: '2024-07-16',
+    hindsightMemoryId: 'mem_adcs_orion_003',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-004',
+    satellite: 'Polaris-Comms-2',
+    subsystem: 'Telemetry & Telecommand (TT&C)',
+    component: 'S-Band Transponder Transmitter/Receiver (XTR-01)',
+    componentType: 'Solid State Power Amplifier & Direct Downconversion Mixer',
+    testType: 'EMI/EMC Qualification',
+    date: '2024-09-14',
+    missionPhase: 'Subsystem Integration',
+    severity: 'MEDIUM',
+    failureMode: 'Telemetry Packet Dropouts & Receiver Bit Slip during RF Burst',
+    testConditions: {
+      temperature: 24.0,
+      voltage: 28.1,
+      current: 3.4,
+      pressure: 'Ambient cleanroom',
+      vibration: '0.0 g RMS',
+      duration: '4 hrs conducted emissions test',
+      environmentalNotes: 'Anechoic EMC chamber, RF load connected via 30dB attenuator'
+    },
+    telemetryReadings: {
+      'rf_output_power_w': 10.2,
+      'frame_loss_rate_pct': 18.4,
+      'bit_error_rate': '4.2e-4',
+      'rssi_dbm': -82.0,
+      'ground_chassis_dc_offset_mv': 340
+    },
+    symptoms: [
+      'Telemetry downlink frame loss rate jumped to 18.4% whenever transmitter transitioned to 10W high-power mode',
+      'Baseband telecommand receiver experienced frequent bit slips and lost lock',
+      'DC offset of 340mV detected between RF chassis ground and digital command decoder ground plane'
+    ],
+    errorCodes: ['ERR-TTC-104', 'FRAME_SYNC_LOSS', 'RX_BIT_SLIP_WARN'],
+    investigation: {
+      initialHypothesis: 'RF leakage into receiver low-noise amplifier (LNA) front-end via diplexer isolation degradation.',
+      diagnosticSteps: [
+        'Measured S-band diplexer transmit-to-receive isolation: 84 dB (nominal)',
+        'Attached spectrum analyzer to receiver baseband IQ lines',
+        'Discovered 2.2 GHz harmonic common-mode RF currents running along digital harness ground shields'
+      ],
+      testsPerformed: [
+        'Conducted RF ground loop impedance mapping across equipment panel',
+        'Common-mode current probe measurements on power/telemetry harness'
+      ],
+      findings: 'The RF amplifier housing was grounded through anodized structural panel fasteners without conductive alodine conversion coating, forcing 1.2A of RF return current through the digital telemetry harness shield.',
+      rootCause: 'Ground loop created by high RF return current flowing through the digital return path due to non-conductive hard-anodized bracket finishes on the structural mounting interface.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Spot-faced anodization at chassis mounting lugs to bare aluminum, treated with Alodine 1200S, and installed dedicated low-inductance silver-plated copper ground straps (10:1 width ratio).',
+      configurationChange: 'Grounding rework DWG-TTC-712: 2x copper bond straps direct to primary ground tree.',
+      result: 'Chassis ground offset dropped to < 4mV. Downlink frame loss rate dropped to 0.00% (BER < 1e-9).',
+      solved: true,
+      whatWorked: 'Dedicated low-inductance ground bonding straps eliminated common-mode RF noise on the digital bus.',
+      whatFailedFirst: 'Adding ferrite beads to the digital harness was attempted first; it only reduced frame loss from 18% to 14% and failed to fix the fundamental ground potential delta.',
+      validationPerformed: 'Passed full MIL-STD-461G conducted and radiated emissions/susceptibility testing.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'High-power RF equipment must have verified conductive bond paths (< 2.5 mΩ) direct to structure; anodized brackets act as dielectric insulators.',
+      checkFirstNextTime: 'Measure DC and RF chassis ground resistance with a 4-wire Kelvin milliohmmeter before testing RF transmitter modes.',
+      flawedAssumptions: 'Assumed structural mounting bolts provided adequate electrical grounding despite anodized bracket coating.',
+      importantWarnings: 'Ferrite chokes on harnesses treat symptoms; they never cure a poor primary RF chassis ground.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Frame Sync Loss at 10W', description: 'Transmitter switch to high-power mode triggered 18% frame loss.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Receiver Bit Slip', description: 'Uplink command receiver lost frame synchronization.', timestamp: 'T+00:15:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Diplexer Leakage Suspected', description: 'Engineering team hypothesized internal diplexer seal leakage.', timestamp: 'T+01:00:00', status: 'info' },
+      { step: 'Testing', title: 'Diplexer Bench Verification', description: 'Diplexer isolation proved within spec (84 dB). Not the cause.', timestamp: 'T+04:00:00', status: 'info' },
+      { step: 'Investigation', title: 'Common-Mode Ground Current', description: 'RF return current found circulating in digital ground shield.', timestamp: 'T+07:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Anodized Mount Non-Conduction', description: 'Anodized bracket prevented chassis grounding, forcing current into signal wire.', timestamp: 'T+10:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Alodine Spot-Facing & Copper Straps', description: 'Installed direct low-inductance bonding straps to primary ground tree.', timestamp: 'T+15:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Zero Frame Loss at 10W', description: 'Frame loss dropped to 0.00% across all operational modulations.', timestamp: 'T+22:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Mandatory Bond Inspection', description: 'Bonding verification step added prior to any RF integration test.', timestamp: 'T+26:00:00', status: 'completed' }
+    ],
+    tags: ['tt&c', 'transponder', 'ground_loop', 'rf', 'emc', 'telemetry_loss', 'packet_loss'],
+    retainedDate: '2024-09-20',
+    hindsightMemoryId: 'mem_ttc_polaris_004',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-005',
+    satellite: 'Zenith-Nav-1',
+    subsystem: 'On-Board Computer (OBC)',
+    component: 'Fault-Tolerant Processor Module (OBC-CPU-A)',
+    componentType: 'Dual-Core LEON4 Rad-Hard SPARC V8 Processor',
+    testType: 'Hardware-in-the-Loop (HIL)',
+    date: '2024-11-03',
+    missionPhase: 'Integrated System Test',
+    severity: 'CRITICAL',
+    failureMode: 'Asynchronous Watchdog Timer Reset & EDAC Trap Storm',
+    testConditions: {
+      temperature: 35.0,
+      voltage: 3.3,
+      current: 1.15,
+      pressure: 'Ambient test lab',
+      vibration: '0.0 g RMS',
+      duration: '72 hrs continuous stress scenario',
+      environmentalNotes: 'High-throughput sensor simulation with simulated orbital eclipse transitions'
+    },
+    telemetryReadings: {
+      'cpu_utilization_pct': 88.5,
+      'edac_correctable_count': 1420,
+      'watchdog_resets': 4,
+      'task_preemptions_sec': 12500,
+      'stack_watermark_kb': 2.4
+    },
+    symptoms: [
+      'Processor rebooted unexpectedly 4 times during simulated mission eclipse transitions',
+      'Telemetry logged EDAC correctable error counter overflow in SRAM bank 2',
+      'Watchdog timer hardware pin WD_OUT triggered autonomous failover to redundant OBC Core B'
+    ],
+    errorCodes: ['ERR-OBC-9001', 'WD_HARD_TIMEOUT', 'EDAC_TRAP_OVERFLOW'],
+    investigation: {
+      initialHypothesis: 'Radiation fault injection script in HIL environment corrupted kernel memory space.',
+      diagnosticSteps: [
+        'Captured high-speed JTAG instruction trace leading up to reboot trigger',
+        'Disabled simulated SEU injection; reboot still occurred during peak telemetry downlink bursts',
+        'Analyzed RTEMS real-time operating system task priority inversion'
+      ],
+      testsPerformed: [
+        'Trace-buffer logic analyzer recording of DMA memory bus arbitration',
+        'Deadlock detection analysis on shared telemetry buffer mutexes'
+      ],
+      findings: 'A priority inversion occurred between low-priority telemetry packet formatting task and high-priority attitude control task. The telemetry task held a memory bus lock during heavy EDAC scrubbing, blocking the watchdog refresh task for > 850ms (watchdog window was 500ms).',
+      rootCause: 'Lack of priority ceiling protocol on shared DMA ring-buffer mutex combined with high interrupt load from EDAC error handler delayed watchdog refresh execution beyond hardware deadline.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Enabled Priority Inheritance Protocol (PIP) on all shared RTOS mutexes and decoupled watchdog strobe task into a dedicated timer interrupt with non-maskable highest priority level.',
+      configurationChange: 'Software Patch SW-OBC-v4.2.1: Mutex priority inheritance enabled; watchdog tick decoupled.',
+      result: 'Zero watchdog resets across 240 continuous hours of 95% CPU load stress simulation.',
+      solved: true,
+      whatWorked: 'Decoupling watchdog timer tick from user-space tasks and enabling priority inheritance solved the starvation.',
+      whatFailedFirst: 'Increasing watchdog timeout window from 500ms to 2000ms was proposed; rejected by reliability committee because it masked underlying scheduling deadlocks.',
+      validationPerformed: 'Executed 10-day endurance HIL test with 10x simulated SEU error injection without a single reset.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Never allow watchdog strobes to depend on user-space task execution in flight software; watchdog maintenance must run on deterministic high-priority timer ISR.',
+      checkFirstNextTime: 'Examine RTOS task execution traces and priority inversion when investigating watchdog resets before blaming hardware memory errors.',
+      flawedAssumptions: 'Believed watchdog was firing due to hardware memory SEU bit flips.',
+      importantWarnings: 'Masking software scheduling delays by widening hardware watchdog windows violates spacecraft fault containment principles.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Unexpected Core A Failover', description: 'Autonomous OBC failover to redundant CPU occurred during HIL test.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Watchdog Timeout Logged', description: 'Hardware watchdog tripped at 500ms deadline; EDAC error spikes.', timestamp: 'T+00:10:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Radiation SEU Script Blamed', description: 'Engineers assumed simulated heavy-ion radiation test corrupted RAM.', timestamp: 'T+01:00:00', status: 'info' },
+      { step: 'Testing', title: 'SEU Injection Turned Off', description: 'Disabled SEU injection. Reset reoccurred during next high telemetry run.', timestamp: 'T+05:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'JTAG Trace Priority Inversion', description: 'JTAG confirmed low-priority task starved watchdog strobe by 850ms.', timestamp: 'T+12:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Shared Mutex Inversion', description: 'Priority inversion on shared DMA buffer blocked watchdog ISR.', timestamp: 'T+16:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Priority Inheritance & ISR Strobe', description: 'Patched kernel with priority inheritance protocol and dedicated ISR.', timestamp: 'T+24:00:00', status: 'completed' },
+      { step: 'Validation', title: '240-Hr Stress Test Pass', description: '10-day soak test with zero watchdog events and 0 dropped frames.', timestamp: 'T+72:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Watchdog Protocol Documented', description: 'Software design rule: watchdog strobes must be isolated in timer ISR.', timestamp: 'T+76:00:00', status: 'completed' }
+    ],
+    tags: ['obc', 'avionics', 'watchdog', 'processor_reset', 'priority_inversion', 'software', 'hil'],
+    retainedDate: '2024-11-10',
+    hindsightMemoryId: 'mem_obc_zenith_005',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-006',
+    satellite: 'AeroSat-4A',
+    subsystem: 'Electrical Power (EPS)',
+    component: 'Power Distribution Unit - Latching Current Limiter (LCL-07)',
+    componentType: 'Solid-State Latching Current Limiter Circuit',
+    testType: 'Thermal Cycling',
+    date: '2023-11-19',
+    missionPhase: 'Component Qualification',
+    severity: 'HIGH',
+    failureMode: 'Spurious LCL Trip & Chattering on Transients at Low Temperature',
+    testConditions: {
+      temperature: -20,
+      voltage: 27.8,
+      current: 4.8,
+      pressure: 'Ambient dry nitrogen box',
+      vibration: '0.0 g RMS',
+      duration: 'Cycle 14 of 25 thermal cycles (-40°C to +70°C)',
+      environmentalNotes: 'Rapid thermal ramp rate 5°C/min'
+    },
+    telemetryReadings: {
+      'load_current_a': 4.8,
+      'trip_threshold_a': 5.0,
+      'actual_trip_measured_a': 4.3,
+      'ambient_temp_c': -20.0,
+      'trip_delay_us': 18
+    },
+    symptoms: [
+      'LCL-07 powering propulsion heater line tripped spuriously at 4.3A despite rated 5.0A limit',
+      'Trip only occurred during cold plateau (-20°C to -40°C); worked flawlessly at +25°C and +70°C',
+      'High-speed telemetry indicated output relay was chattering on transient turn-on current spike'
+    ],
+    errorCodes: ['ERR-PWR-205', 'LCL_OVERCURRENT_TRIP', 'HEATER_BUS_OFFLINE'],
+    investigation: {
+      initialHypothesis: 'Heater element resistance had decreased at low temperatures, drawing higher current.',
+      diagnosticSteps: [
+        'Measured heater element resistance across temperature: stable within 4%',
+        'Injected calibrated precision 4.5A current step through LCL at cold chamber',
+        'Monitored comparator sense resistor voltage threshold'
+      ],
+      testsPerformed: [
+        'Sense resistor TCR (temperature coefficient of resistance) verification',
+        'Comparator bias current drift testing over temperature'
+      ],
+      findings: 'The current sense resistor had a -250 ppm/°C temperature coefficient, and the sensing comparator had no hysteresis capacitor. At -20°C, the trip threshold shifted downward by 14% to 4.3A.',
+      rootCause: 'Sense resistor choice lacked zero-TCR specification and comparator hysteresis was insufficient to reject inrush ripple under cold temperatures.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Replaced sense resistor with ±10 ppm/°C metal foil resistor and added 47pF hysteresis feedback capacitor to comparator.',
+      configurationChange: 'BOM Change: Vishay CSM3637 metal foil shunt + C_hyst=47pF.',
+      result: 'Trip threshold remained stable at 5.05A ± 0.05A from -45°C to +85°C with zero spurious trips.',
+      solved: true,
+      whatWorked: 'High-stability metal foil sense resistor and hysteresis capacitor completely eliminated temperature drift.',
+      whatFailedFirst: 'Increasing the software retry counter was suggested, but this risked blowing the series pass transistor under a real short-circuit.',
+      validationPerformed: 'Completed remaining 15 thermal cycles through -45°C with 4.8A continuous load.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Current sense shunts in spacecraft power distribution must specify < 15 ppm/°C TCR; low-cost thick film shunts cause severe cold-temperature trip drift.',
+      checkFirstNextTime: 'Calculate TCR shift of sense resistor whenever overcurrent trips correlate with cold thermal plateaus.',
+      flawedAssumptions: 'Assumed payload heater load was drawing excess current.',
+      importantWarnings: 'Never remove latching current limiters or disable protection in flight software without ground review.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Heater Line Spurious Trip', description: 'LCL-07 tripped at -20°C with load well below 5.0A rating.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Cold-Temperature Dependency', description: 'Anomaly repeatable only below -15°C; nominal at ambient.', timestamp: 'T+00:30:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Heater Inrush Suspected', description: 'Engineers suspected heater resistance drop at sub-zero.', timestamp: 'T+02:00:00', status: 'info' },
+      { step: 'Testing', title: 'Load Calibration', description: 'Heater resistance measured within 4% of nominal. Load cleared.', timestamp: 'T+05:00:00', status: 'info' },
+      { step: 'Investigation', title: 'Sense Shunt TCR Analysis', description: 'Sense resistor exhibited -250 ppm/°C drift shifting threshold to 4.3A.', timestamp: 'T+09:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Shunt Drift & Zero Hysteresis', description: 'Thick film resistor TCR shifted trip point downward in cold.', timestamp: 'T+12:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Metal Foil Resistor & Hysteresis', description: 'Swapped to 10 ppm metal foil resistor and added 47pF hysteresis.', timestamp: 'T+18:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Thermal Cycling Cleared', description: 'Passed 25 thermal cycles across -45°C to +85°C with zero trips.', timestamp: 'T+36:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'TCR Rule Enforced', description: 'Mandatory metal foil shunt rule added to EPS design manual.', timestamp: 'T+40:00:00', status: 'completed' }
+    ],
+    tags: ['eps', 'power', 'lcl', 'voltage_instability', 'thermal_cycling', 'trip', 'tcr'],
+    retainedDate: '2023-11-25',
+    hindsightMemoryId: 'mem_eps_aerosat_006',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-007',
+    satellite: 'Orion-Surveyor-2',
+    subsystem: 'Attitude & Orbit Control (ADCS)',
+    component: 'Autonomous Star Tracker Optical Head (STR-A)',
+    componentType: 'CMOS Active Pixel Sensor & Baffle Optics',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2023-08-14',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'MEDIUM',
+    failureMode: 'Noise Equivalent Angle (NEA) Degradation under Rapid Thermal Gradient',
+    testConditions: {
+      temperature: 42.0,
+      voltage: 5.0,
+      current: 0.62,
+      pressure: '2.1e-6 Torr',
+      vibration: '0.0 g RMS',
+      duration: 'Solar transit simulation',
+      environmentalNotes: 'IR lamp heating of star tracker sunshade baffle'
+    },
+    telemetryReadings: {
+      'star_count_tracked': 4,
+      'nominal_star_count': 18,
+      'attitude_residual_arcsec': 68.2,
+      'nominal_residual_arcsec': 4.5,
+      'baffle_temp_c': 58.0,
+      'detector_temp_c': 18.0
+    },
+    symptoms: [
+      'Tracked star count dropped from 18 stars to only 4 stars during thermal transition',
+      'Attitude error residual skyrocketed from 4.5 arcsec to 68.2 arcsec',
+      'Star tracker reported loss of attitude quaternion solution every 3 minutes'
+    ],
+    errorCodes: ['ERR-ADCS-702', 'STR_STAR_COUNT_LOW', 'ATTITUDE_LOST_LOCK'],
+    investigation: {
+      initialHypothesis: 'Direct stray light leakage through sunshade baffle joint seams.',
+      diagnosticSteps: [
+        'Darkened TVAC chamber completely; verified zero external stray light',
+        'Anomaly still occurred solely while the temperature gradient between baffle and detector exceeded 25°C',
+        'Laser focal spot interferometry of optical barrel assembly'
+      ],
+      testsPerformed: [
+        'Finite element thermo-elastic deflection modeling',
+        'Centroiding algorithm point-spread function (PSF) distortion inspection'
+      ],
+      findings: 'The titanium mounting ring on the titanium/aluminum optical barrel induced asymmetric mechanical bending when the front baffle was hot, defocussing the star PSF and causing the centroid algorithm to discard valid stars.',
+      rootCause: 'Differential thermal expansion between titanium lens cell and aluminum adapter ring warped optical alignment under thermal gradient > 25°C.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Redesigned optical mounting bracket with titanium thermal flexure isolators and updated star centroiding software algorithm to tolerate slight PSF ellipticity.',
+      configurationChange: 'ECO-STR-401: Titanium flexure mount + Firmware v3.8 PSF tolerance patch.',
+      result: 'Residual error dropped to 3.8 arcsec; tracked star count remained > 16 stars throughout 40°C thermal gradient.',
+      solved: true,
+      whatWorked: 'Thermal flexure mounts mechanically decoupled the thermal distortion of the baffle from the lens barrel.',
+      whatFailedFirst: 'Adjusting image sensor exposure time and dark current subtraction was tried first; it had zero effect on the optical defocusing.',
+      validationPerformed: 'Completed full TVAC thermal gradient simulation up to 55°C delta-T with continuous attitude lock.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Optical sensors require kinematic thermal flexure isolation; rigid bolting across dissimilar metal thermal boundaries guarantees focal distortion.',
+      checkFirstNextTime: 'Inspect optical PSF shape and thermal gradient before tweaking image processing algorithms.',
+      flawedAssumptions: 'Assumed external stray light was entering the lens hood.',
+      importantWarnings: 'Do not widen star identification acceptance gate too far in software, or the tracker will latch onto false stars.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Star Tracker Lost Lock', description: 'Attitude solution lost when solar heating reached baffle hood.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Star Count Collapsed', description: 'Identified stars plunged from 18 to 4; residual error jumped 15x.', timestamp: 'T+00:20:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Stray Light Suspected', description: 'Engineers suspected chamber lamp reflection into baffle.', timestamp: 'T+01:00:00', status: 'info' },
+      { step: 'Testing', title: 'Zero-Light Verification', description: 'Chamber lights turned off. Error persisted under thermal delta-T.', timestamp: 'T+03:30:00', status: 'info' },
+      { step: 'Investigation', title: 'Thermo-Elastic Warping', description: 'Interferometry confirmed 18 micron focal plane tilt during gradient.', timestamp: 'T+08:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Differential CTE Bending', description: 'Rigid titanium/aluminum interface warped lens barrel under gradient.', timestamp: 'T+12:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Kinematic Flexure Mount', description: 'Installed titanium kinematic flexure isolators on optical head.', timestamp: 'T+20:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Full Gradient Retest Pass', description: 'Attitude residual remained at 3.8 arcsec with 16+ stars tracked.', timestamp: 'T+36:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Flexure Standard Established', description: 'Kinematic flexure mounting made mandatory for all precision optics.', timestamp: 'T+40:00:00', status: 'completed' }
+    ],
+    tags: ['adcs', 'star_tracker', 'optical', 'thermal_gradient', 'tvac', 'pointing_error'],
+    retainedDate: '2023-08-20',
+    hindsightMemoryId: 'mem_adcs_orion_007',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-008',
+    satellite: 'Centaur-Surveyor-1',
+    subsystem: 'Propulsion (PROP)',
+    component: 'Monopropellant Hydrazine Thruster Latch Valve (LV-02)',
+    componentType: 'Solenoid Actuated Bi-Stable Latch Valve',
+    testType: 'Vibration & Acoustic Test',
+    date: '2024-02-17',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'HIGH',
+    failureMode: 'Micro-Leakage across Valve Seat post Acoustic Vibration',
+    testConditions: {
+      temperature: 20.0,
+      voltage: 28.0,
+      current: 0.0,
+      pressure: 'Helium pressurization 22 bar',
+      vibration: 'Acoustic Chamber 146 dB OASPL',
+      duration: '120 sec acoustic excitation',
+      environmentalNotes: 'Helium sniffer bag test on thruster manifold'
+    },
+    telemetryReadings: {
+      'helium_leak_rate_sccs': '4.8e-3',
+      'max_allowed_sccs': '1.0e-5',
+      'upstream_pressure_bar': 22.0,
+      'downstream_pressure_bar': 0.18,
+      'coil_resistance_ohm': 42.1
+    },
+    symptoms: [
+      'Post-acoustic test helium mass spectrometer detected 4.8e-3 sccs leak rate across closed latch valve seat',
+      'Maximum allowable flight specification is 1.0e-5 sccs',
+      'Downstream pressure in thruster manifold slowly climbed over 60 minutes'
+    ],
+    errorCodes: ['ERR-PROP-501', 'VALVE_SEAT_LEAK_EXCEEDED', 'PRESSURE_RISE_WARN'],
+    investigation: {
+      initialHypothesis: 'Acoustic energy damaged or cracked the polymer seal seat (PCTFE/Kel-F).',
+      diagnosticSteps: [
+        'Excited valve with 10 actuation cycles; leak rate fluctuated between 2e-3 and 8e-3 sccs',
+        'Borescope inspection of internal valve orifice',
+        'Ultrasonic solvent flush collection and particle count filter analysis'
+      ],
+      testsPerformed: [
+        'Particle analysis with energy-dispersive X-ray spectroscopy (EDS)',
+        'Optical profilometry of sealing poppet'
+      ],
+      findings: 'EDS analysis of particulate flushed from seat identified 25-micron 316L stainless steel swarf flakes matching ground support equipment (GSE) quick-disconnect coupling threads.',
+      rootCause: 'GSE propellant loading quick-disconnect coupling generated metallic micro-burrs during manual connection, which migrated downstream and lodged in the valve poppet seat during acoustic vibration.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Ultrasonically flushed the propulsion feed manifold, replaced latch valve with clean flight unit, and integrated a 5-micron sintered metal inline filter directly upstream of the propellant fill & drain coupling.',
+      configurationChange: 'MOD-PROP-209: Added 5-micron inline filter FLT-01 + GSE inspection protocol.',
+      result: 'Helium leak rate post re-vibration was 3.2e-7 sccs (well below 1.0e-5 spec).',
+      solved: true,
+      whatWorked: 'Inline 5-micron filter captured all GSE swarf; valve seat remained completely particle-free.',
+      whatFailedFirst: 'Cycling the valve 50 times to dislodge the particle was attempted initially; this ground the metallic burr into the soft Kel-F seat, permanently destroying the original valve seal.',
+      validationPerformed: 'Retested through full acoustic profile followed by 72-hour high-pressure helium leak decay test.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Never repeatedly cycle a leaking valve on ground test; cycling embeds hard particles into soft polymer seats and turns a washable particle into a permanent gouge.',
+      checkFirstNextTime: 'Back-flush manifold and inspect filter catchers before attempting valve actuation cycling.',
+      flawedAssumptions: 'Assumed cycling the solenoid would blow away any loose particles.',
+      importantWarnings: 'GSE fluid couplings must always have dedicated protective micro-filters installed during ground operations.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Helium Sniffer Leak Detection', description: 'Mass spectrometer alarmed 4.8e-3 sccs helium leak across valve.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Manifold Pressure Creep', description: 'Downstream manifold showed steady 0.18 bar pressure rise.', timestamp: 'T+00:30:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Acoustic Seat Fracture Assumed', description: 'Team suspected acoustic shock cracked the Kel-F valve seat.', timestamp: 'T+01:30:00', status: 'info' },
+      { step: 'Testing', title: 'Actuation Cycling (Mistake)', description: 'Engineers cycled valve 50x; leak rate worsened by 4x.', timestamp: 'T+04:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'Particulate Flush & EDS', description: 'EDS identified 316L stainless steel burrs from GSE quick disconnect.', timestamp: 'T+10:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'GSE Thread Debris Ingestion', description: 'Coupling burr lodged in poppet seat during acoustic shake.', timestamp: 'T+14:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Inline Filter & Seat Swap', description: 'Replaced valve and installed 5-micron sintered filter upstream.', timestamp: 'T+24:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Post-Acoustic Leak Pass', description: 'Leak rate measured 3.2e-7 sccs after acoustic re-test.', timestamp: 'T+40:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'No-Cycle Rule Enforced', description: 'Ground rule: zero valve cycling permitted on suspect particle contamination.', timestamp: 'T+44:00:00', status: 'completed' }
+    ],
+    tags: ['propulsion', 'valve', 'leakage', 'vibration', 'particulate', 'gse', 'cleanliness'],
+    retainedDate: '2024-02-24',
+    hindsightMemoryId: 'mem_prop_centaur_008',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-009',
+    satellite: 'GeoEye-Surveyor-5',
+    subsystem: 'Optical Payload (PL)',
+    component: 'High-Resolution Multispectral CMOS Focal Plane Array (FPA)',
+    componentType: 'Time Delay Integration (TDI) Image Sensor & LVDS Serializer',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2024-06-04',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'MEDIUM',
+    failureMode: 'Periodic Horizontal Stripe Noise & LVDS Bit Slip during Cold Plateau',
+    testConditions: {
+      temperature: -15.0,
+      voltage: 3.3,
+      current: 2.4,
+      pressure: '1.5e-6 Torr',
+      vibration: '0.0 g RMS',
+      duration: 'Cold operational imaging run',
+      environmentalNotes: 'FPA passive radiator cooled to -25°C, focal plane electronics at -15°C'
+    },
+    telemetryReadings: {
+      'fpa_temp_c': -15.0,
+      'lvds_jitter_ps_rms': 84.5,
+      'nominal_jitter_ps': 18.0,
+      'corrupted_lines_per_frame': 34,
+      'clock_skew_ps': 410
+    },
+    symptoms: [
+      'Downlinked multispectral test patterns showed periodic horizontal black stripes across bands 2 and 4',
+      'High-speed deserializer reported intermittent clock-data phase lock loss (eye diagram collapse)',
+      'Pattern vanished immediately when FPA electronics baseplate was warmed above +5°C'
+    ],
+    errorCodes: ['ERR-PAYLOAD-812', 'LVDS_DESER_LOCK_FAIL', 'IMAGE_LINE_DROPOUT'],
+    investigation: {
+      initialHypothesis: 'CMOS sensor pixel register cold-temperature readout degradation.',
+      diagnosticSteps: [
+        'Captured raw serialized differential signals using 20 GHz oscilloscope in TVAC test port',
+        'Eye-diagram jitter at -15°C widened from 18 ps to 84.5 ps, violating deserializer setup time',
+        'Traced clock distribution trace on flexible printed circuit (FPC) cable'
+      ],
+      testsPerformed: [
+        'Differential impedance TDR (Time Domain Reflectometry) over temperature',
+        'LVDS termination resistor temperature coefficient check'
+      ],
+      findings: 'The differential 100Ω termination resistor on the flex harness was a standard thick-film component that shifted to 134Ω at -15°C, causing transmission line impedance mismatch and high-frequency reflections.',
+      rootCause: 'Thick-film LVDS termination resistor had high cold-temperature resistance drift, distorting differential clock edges and causing deserializer bit slips.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Replaced termination resistors with 0.1% thin-film low-TCR resistors (100Ω ± 5 ppm/°C) and adjusted deserializer internal PLL loop filter gain.',
+      configurationChange: 'ECN-PAYLOAD-911: Thin-film 100Ω 0504 resistor swap on FPA flex cable.',
+      result: 'Eye diagram wide open with 16 ps RMS jitter at -25°C. Zero corrupted image scanlines.',
+      solved: true,
+      whatWorked: 'Thin-film low-TCR termination resistors preserved 100Ω differential impedance in cold vacuum.',
+      whatFailedFirst: 'Adjusting camera exposure settings and recalibrating gain offset tables in software was tried first; it did nothing to fix physical transmission line bit slips.',
+      validationPerformed: 'Continuous 48-hr cold-soak test with 50,000 full-frame test images captured with 0 corrupted lines.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'High-speed serialized digital lines (LVDS / SpaceWire) in vacuum are extremely sensitive to termination resistor TCR; always use precision thin-film components.',
+      checkFirstNextTime: 'Measure physical eye diagram on differential receivers whenever imaging scanlines drop out in thermal chamber.',
+      flawedAssumptions: 'Assumed CMOS sensor silicon was failing to clock charges in cold temperatures.',
+      importantWarnings: 'Do not attempt to patch hardware LVDS bit slips with software image interpolation algorithms.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Multispectral Stripe Artifact', description: 'Multispectral image scanlines showed black stripe dropouts in TVAC.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Cold-Only Bit Slip', description: 'Dropout only appeared below 0°C; resolved when warmed above +5°C.', timestamp: 'T+00:30:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Sensor Readout Clock Blamed', description: 'Team suspected CMOS internal charge transfer degradation.', timestamp: 'T+01:30:00', status: 'info' },
+      { step: 'Testing', title: 'Gain Calibration (No Fix)', description: 'Gain table adjustment failed; scanlines still lost.', timestamp: 'T+04:00:00', status: 'info' },
+      { step: 'Investigation', title: '20 GHz Eye Diagram Probe', description: 'Differential eye diagram closed with 84.5 ps jitter in cold soak.', timestamp: 'T+08:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Termination Resistor Drift', description: 'Thick film 100Ω termination shifted to 134Ω at -15°C causing reflection.', timestamp: 'T+11:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Thin-Film Low-TCR Resistors', description: 'Installed 5 ppm thin-film 100Ω resistors on flex harness.', timestamp: 'T+18:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Zero Line Corruptions', description: '50,000 test frames captured at -25°C with zero dropped lines.', timestamp: 'T+30:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Differential Line Standard', description: 'Mandated thin-film resistors on all serialized data interconnects.', timestamp: 'T+34:00:00', status: 'completed' }
+    ],
+    tags: ['payload', 'optical', 'sensor', 'lvds', 'tvac', 'cryogenic', 'stripe_noise'],
+    retainedDate: '2024-06-11',
+    hindsightMemoryId: 'mem_pl_geoeye_009',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-010',
+    satellite: 'AeroSat-4B',
+    subsystem: 'Electrical Power (EPS)',
+    component: 'Solar Array Drive Mechanism (SADM) Slip Ring Unit',
+    componentType: 'Gold-on-Gold Wire Brush Slip Ring Assembly',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2024-04-02',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'HIGH',
+    failureMode: 'Telemetry Noise & Solar Array Current Fluctuation during Rotation',
+    testConditions: {
+      temperature: 55.0,
+      voltage: 50.0,
+      current: 12.0,
+      pressure: '8.5e-7 Torr',
+      vibration: '0.0 g RMS',
+      duration: 'Continuous 1.0 deg/sec rotation in TVAC',
+      environmentalNotes: 'Thermal vacuum chamber hot case soak'
+    },
+    telemetryReadings: {
+      'slip_ring_contact_resistance_mohm': 480,
+      'nominal_contact_resistance_mohm': 15,
+      'current_noise_a_pp': 2.8,
+      'sadm_torque_nm': 1.45,
+      'sadm_motor_steps': 18400
+    },
+    symptoms: [
+      'Solar array power telemetry experienced 2.8A peak-to-peak current fluctuations during array tracking rotation',
+      'Slip ring contact resistance surged from 15 mΩ to 480 mΩ intermittently',
+      'Noise spikes coupled into adjacent solar array temperature sensor telemetry lines'
+    ],
+    errorCodes: ['ERR-PWR-719', 'SADM_CONTACT_RESISTANCE_HIGH', 'SOLAR_CURRENT_JITTER'],
+    investigation: {
+      initialHypothesis: 'Mechanical misalignment of SADM motor gearhead causing brush lift-off.',
+      diagnosticSteps: [
+        'Checked gearhead backlash and stepper motor drive pulses: perfectly nominal',
+        'Removed slip ring cover in cleanroom and inspected gold contact track under microscope',
+        'Observed dark organic film transfer track along gold ring groove'
+      ],
+      testsPerformed: [
+        'FTIR (Fourier Transform Infrared) spectroscopy of surface contaminant',
+        'Vacuum outgassing analysis of nearby motor bearing lubricant'
+      ],
+      findings: 'FTIR identified fluorosilicone oil contamination on the gold track. The SADM motor bearing had been lubricated with unbaked grease that outgassed directly into the slip ring chamber under 55°C vacuum.',
+      rootCause: 'Unqualified fluorosilicone grease used in adjacent gearhead outgassed under high vacuum and deposited a high-resistance insulating dielectric film on the gold slip ring tracks.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Cleaned gold slip ring tracks with precision solvent wipes (solvent IPA/hexane), replaced bearing lubricant with Braycote 601EF low-outgassing space-qualified grease, and installed a labyrinth seal barrier between motor and slip ring.',
+      configurationChange: 'MOD-SADM-310: Braycote 601EF grease + Teflon labyrinth seal.',
+      result: 'Contact resistance dropped to steady 12 mΩ. Current noise dropped to < 0.05A pp across 100,000 revolutions.',
+      solved: true,
+      whatWorked: 'Braycote 601EF grease with labyrinth seal prevented all volatile condensable material migration.',
+      whatFailedFirst: 'Increasing brush spring pre-load force was tried on the bench; it merely scored the gold plating without removing the insulating outgassed film.',
+      validationPerformed: 'Completed 500,000 equivalent orbital rotations in TVAC at +65°C with zero contact resistance spikes.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Gold slip ring assemblies must be hermetically sealed or labyrinth-isolated from unbaked lubricants; condensable volatiles form dielectric films under vacuum arcs.',
+      checkFirstNextTime: 'Inspect for chemical outgassing deposits on slip rings before altering mechanical brush spring tension.',
+      flawedAssumptions: 'Assumed brush spring contact pressure was inadequate.',
+      importantWarnings: 'Never increase brush contact force when dielectric films are present; this strips gold plating and causes catastrophic cold-welding in vacuum.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Current Jitter during SADM Turn', description: '2.8A telemetry fluctuation observed while solar panels rotated in TVAC.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Contact Resistance Surge', description: 'Slip ring resistance spiked from 15 mΩ to 480 mΩ.', timestamp: 'T+00:40:00', status: 'critical' },
+      { step: 'Hypothesis', title: 'Brush Lift-Off Assumed', description: 'Engineers suspected gearhead vibration lifted brush contacts.', timestamp: 'T+02:00:00', status: 'info' },
+      { step: 'Testing', title: 'Spring Tension Increase (Failed)', description: 'Tension increased; gold track began scoring with no improvement.', timestamp: 'T+06:00:00', status: 'alert' },
+      { step: 'Investigation', title: 'FTIR Chemical Analysis', description: 'FTIR revealed fluorosilicone oil film outgassed from motor grease.', timestamp: 'T+12:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Grease Outgassing Film', description: 'Unqualified gearhead lubricant migrated and created insulating film.', timestamp: 'T+16:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Braycote Grease & Labyrinth Seal', description: 'Cleaned track, swapped to Braycote 601EF, and installed barrier seal.', timestamp: 'T+24:00:00', status: 'completed' },
+      { step: 'Validation', title: '500k Rotation TVAC Pass', description: 'Contact resistance stabilized at 12 mΩ across 500k rotations.', timestamp: 'T+48:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Labyrinth Isolation Standard', description: 'Labyrinth seals mandated between mechanisms and electrical contacts.', timestamp: 'T+52:00:00', status: 'completed' }
+    ],
+    tags: ['power', 'sadm', 'slip_ring', 'outgassing', 'tvac', 'resistance_spike', 'eps'],
+    retainedDate: '2024-04-10',
+    hindsightMemoryId: 'mem_pwr_aerosat_010',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-011',
+    satellite: 'Orion-Surveyor-1',
+    subsystem: 'Attitude & Orbit Control (ADCS)',
+    component: 'Magnetic Torquer Rod (MTR-Z) - Desaturation Actuator',
+    componentType: 'Permalloy Core High-Moment Electromagnet',
+    testType: 'Hardware-in-the-Loop (HIL)',
+    date: '2023-05-18',
+    missionPhase: 'Component Qualification',
+    severity: 'LOW',
+    failureMode: 'Core Remanence & Asymmetric Dipole Magnetic Moment',
+    testConditions: {
+      temperature: 22.0,
+      voltage: 12.0,
+      current: 0.45,
+      pressure: 'Ambient magnetic shielding chamber',
+      vibration: '0.0 g RMS',
+      duration: 'Dipole calibration sweep',
+      environmentalNotes: 'Helmholtz cage zero-field environment'
+    },
+    telemetryReadings: {
+      'commanded_dipole_am2': 30.0,
+      'measured_dipole_am2': 36.4,
+      'residual_remanence_am2': 4.2,
+      'nominal_remanence_am2': 0.15,
+      'coil_temp_c': 28.0
+    },
+    symptoms: [
+      'Magnetic torquer Z-axis produced 4.2 A·m² residual magnetic dipole when commanded current was zero',
+      'Caused persistent attitude drift on reaction wheels requiring continuous counter-torque',
+      'Hysteresis loop showed non-symmetric saturation in positive magnetic field direction'
+    ],
+    errorCodes: ['ERR-ADCS-114', 'MTR_REMANENCE_LIMIT', 'DIPOLE_ASYMMETRY'],
+    investigation: {
+      initialHypothesis: 'Coil drive H-bridge driver leakage current flowing through windings when idle.',
+      diagnosticSteps: [
+        'Disconnected H-bridge physically and shorted coil terminals; residual dipole remained 4.2 A·m²',
+        'Measured permalloy core magnetic hysteresis loop using fluxgate magnetometer',
+        'Discovered core material had not undergone post-machining hydrogen vacuum anneal'
+      ],
+      testsPerformed: [
+        'B-H loop magnetic characterization',
+        'Metallurgical grain structure etching'
+      ],
+      findings: 'The rod supplier omitted the final 1100°C hydrogen annealing process after mechanical cutting, leaving residual mechanical strain that locked in magnetic domain remanence.',
+      rootCause: 'Omission of final magnetic hydrogen annealing cycle by supplier resulted in high core coercivity and unacceptable remanent magnetic dipole.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Returned core rods for certified 1100°C dry-hydrogen vacuum annealing cycle and implemented automatic demagnetization (degaussing) alternating current pulse routine in ADCS flight software at shutdown.',
+      configurationChange: 'ECN-MTR-088: Hydrogen anneal cert + FSW Degauss Pulse Sequence v2.1.',
+      result: 'Residual remanence dropped from 4.2 A·m² to 0.08 A·m² (well within 0.20 A·m² requirement).',
+      solved: true,
+      whatWorked: 'Hydrogen anneal restored high permeability; software degauss sequence prevented any in-orbit flux accumulation.',
+      whatFailedFirst: 'Applying software bias offset current was attempted; it caused thermal heating in the torquer and drifted as the coil warmed up.',
+      validationPerformed: 'Measured 100 complete magnetization/demagnetization cycles in Helmholtz cage; zero remanence shift.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'High-permeability magnetic cores must never undergo mechanical drilling or machining after hydrogen annealing; strain destroys low-coercivity properties.',
+      checkFirstNextTime: 'Measure remanent field of unpowered core in zero-Gauss chamber before suspecting drive electronics leakage.',
+      flawedAssumptions: 'Assumed electronics drive circuit was leaking idle bias current.',
+      importantWarnings: 'Do not use software steady-state bias currents to cancel magnetic remanence; coil temperature changes will destabilize pointing.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Residual Dipole Measured', description: '4.2 A·m² magnetic field detected when MTR current was zero.', timestamp: 'T+00:00:00', status: 'alert' },
+      { step: 'Symptoms', title: 'Attitude Drift in HIL', description: 'Reaction wheels showed steady momentum buildup counteracting residual field.', timestamp: 'T+00:45:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'H-Bridge Leakage Suspected', description: 'Engineers suspected MOSFET leakage current through coil.', timestamp: 'T+01:30:00', status: 'info' },
+      { step: 'Testing', title: 'Physical Disconnect Test', description: 'Coil physically unplugged; magnetic field remained 4.2 A·m².', timestamp: 'T+03:00:00', status: 'info' },
+      { step: 'Investigation', title: 'B-H Loop Hysteresis Analysis', description: 'Core exhibited severe coercivity and lack of soft magnetic properties.', timestamp: 'T+07:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Hydrogen Annealing Omitted', description: 'Supplier skipped final 1100°C hydrogen vacuum anneal after machining.', timestamp: 'T+11:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Hydrogen Anneal & Degauss FSW', description: 'Re-annealed cores and deployed autonomous FSW degauss sequence.', timestamp: 'T+18:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Zero Field Verified', description: 'Residual field dropped to 0.08 A·m² across 100 duty cycles.', timestamp: 'T+30:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Anneal Cert Mandated', description: 'Mandatory metallurgy certs required on all magnetic core procurements.', timestamp: 'T+34:00:00', status: 'completed' }
+    ],
+    tags: ['adcs', 'magnetic_torquer', 'magnetics', 'remanence', 'hil', 'pointing_drift'],
+    retainedDate: '2023-05-25',
+    hindsightMemoryId: 'mem_adcs_orion_011',
+    isSimulatedData: true
+  },
+  {
+    id: 'CASE-012',
+    satellite: 'KaSat-HighThroughput-1',
+    subsystem: 'Telemetry & Telecommand (TT&C)',
+    component: 'Ka-Band Steerable Phased Array Downlink Antenna',
+    componentType: '64-Element Active Electronically Scanned Array (AESA)',
+    testType: 'Thermal Vacuum (TVAC)',
+    date: '2024-08-22',
+    missionPhase: 'Spacecraft Environmental Test',
+    severity: 'HIGH',
+    failureMode: 'Beam Pointing Error & Side-Lobe Level Spikes at Hot Boundary',
+    testConditions: {
+      temperature: 62.0,
+      voltage: 12.0,
+      current: 8.5,
+      pressure: '9.0e-7 Torr',
+      vibration: '0.0 g RMS',
+      duration: 'Hot TVAC RF beam pattern test',
+      environmentalNotes: 'RF anechoic window integrated into TVAC chamber'
+    },
+    telemetryReadings: {
+      'beam_squint_deg': 2.4,
+      'nominal_pointing_deg': 0.1,
+      'sidelobe_level_dbc': -9.2,
+      'nominal_sidelobe_dbc': -22.0,
+      'rf_array_temp_c': 62.0,
+      'gain_drop_db': 3.8
+    },
+    symptoms: [
+      'Ka-band RF main beam squinted by 2.4 degrees away from commanded boresight at +62°C',
+      'Side-lobe levels degraded from -22 dBc to -9.2 dBc, violating ITU frequency regulation limits',
+      'Antenna boresight gain dropped by 3.8 dB'
+    ],
+    errorCodes: ['ERR-TTC-920', 'BEAM_POINTING_ERROR', 'SIDELOBE_VIOLATION'],
+    investigation: {
+      initialHypothesis: 'Thermal warpage of composite antenna panel backing structure.',
+      diagnosticSteps: [
+        'Photogrammetry measurement of antenna panel flatness in TVAC: flatness was within 0.15mm',
+        'Measured individual transmit/receive module (TRM) phase shifter codes across temperature',
+        'Analyzed beamforming look-up table polynomial temperature compensation algorithm'
+      ],
+      testsPerformed: [
+        'Vector network analyzer phase measurement on all 64 individual RF channels',
+        'Firmware phase calibration polynomial validation'
+      ],
+      findings: 'The firmware temperature compensation formula had an inverted sign coefficient for the quadratic term (+0.042 instead of -0.042) in the phase calibration polynomial for MMIC phase shifters.',
+      rootCause: 'Sign error in the quadratic thermal compensation coefficient in beamformer firmware caused phase errors to quadruple rather than cancel out above +45°C.'
+    },
+    correctiveAction: {
+      actionAttempted: 'Corrected the quadratic sign coefficient in the firmware calibration table and loaded verified temperature lookup matrix for all 64 channels.',
+      configurationChange: 'Firmware Update: AESA-BEAM-FW-v2.4.1 (Sign error fix in Cal Table).',
+      result: 'Main beam squint dropped to < 0.08 degrees. Side-lobes recovered to -23.5 dBc at +65°C.',
+      solved: true,
+      whatWorked: 'Correcting the calibration polynomial formula restored phase alignment across the array.',
+      whatFailedFirst: 'Adjusting mechanical antenna gimbal pointing to counteract the squint was considered; discarded because side-lobe degradation would still violate regulatory emission limits.',
+      validationPerformed: 'Completed full far-field pattern scan across -30°C to +65°C with 0 beam squint anomalies.'
+    },
+    lessonsLearned: {
+      primaryLesson: 'Always calibrate phased array active beamforming tables at temperature extremes; room-temperature RF calibration cannot detect polynomial sign inversion errors.',
+      checkFirstNextTime: 'Verify individual channel phase telemetry against calibration lookup tables before assuming mechanical panel warpage.',
+      flawedAssumptions: 'Assumed composite structure was mechanically warping under thermal solar load.',
+      importantWarnings: 'Do not use mechanical gimbal offsets to compensate for phased array electronic phase drift; it destroys side-lobe suppression.'
+    },
+    timeline: [
+      { step: 'Detection', title: 'Beam Pointing Squint at +62°C', description: 'RF beam squinted 2.4° off boresight during hot TVAC plateau.', timestamp: 'T+00:00:00', status: 'critical' },
+      { step: 'Symptoms', title: 'Side-Lobe Degradation', description: 'Side-lobes spiked to -9.2 dBc, exceeding regulatory limits.', timestamp: 'T+00:25:00', status: 'alert' },
+      { step: 'Hypothesis', title: 'Composite Panel Warping', description: 'Team suspected mechanical distortion of antenna reflector.', timestamp: 'T+01:30:00', status: 'info' },
+      { step: 'Testing', title: 'Photogrammetry Flatness Check', description: 'Panel surface photogrammetry confirmed mechanical flatness < 0.15mm.', timestamp: 'T+04:00:00', status: 'info' },
+      { step: 'Investigation', title: 'Phase Shifter Telemetry Probe', description: 'TRM channel phases were diverging exponentially as temperature rose.', timestamp: 'T+08:00:00', status: 'critical' },
+      { step: 'Root cause', title: 'Firmware Sign Inversion Error', description: 'Quadratic term in thermal compensation polynomial had positive sign error.', timestamp: 'T+12:00:00', status: 'critical' },
+      { step: 'Corrective action', title: 'Firmware Calibration Patch', description: 'Patched beamformer firmware v2.4.1 with verified thermal polynomial.', timestamp: 'T+18:00:00', status: 'completed' },
+      { step: 'Validation', title: 'Far-Field TVAC Pattern Cleared', description: 'Beam pointing returned to < 0.08° and side-lobes restored to -23.5 dBc.', timestamp: 'T+28:00:00', status: 'completed' },
+      { step: 'Lessons learned', title: 'Array Temp Protocol Mandate', description: 'High-temperature phased array calibration added to test standards.', timestamp: 'T+32:00:00', status: 'completed' }
+    ],
+    tags: ['tt&c', 'phased_array', 'rf', 'beam_squint', 'tvac', 'temperature_excess', 'antenna'],
+    retainedDate: '2024-08-28',
+    hindsightMemoryId: 'mem_ttc_kasat_012',
+    isSimulatedData: true
+  }
+];

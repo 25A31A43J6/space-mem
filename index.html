@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SPACE-MEM — Spacecraft Failure Memory & Investigation Assistant</title>
+    <meta name="description" content="AI-powered engineering memory and anomaly investigation platform for spacecraft and satellite testing. Transforming historical failures into reusable experience." />
+    <meta property="og:title" content="SPACE-MEM — Spacecraft Failure Memory & Investigation Assistant" />
+    <meta property="og:description" content="AI-powered engineering memory and anomaly investigation platform for spacecraft and satellite testing. Transforming historical failures into reusable experience." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+      video, .background-video {
+        position: fixed;
+        inset: 0;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+        outline: none;
+        border-radius: 0;
+        pointer-events: none;
+        background-color: transparent;
+      }
+      .video-overlay, .background-overlay {
+        position: fixed;
+        inset: 0;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1;
+        pointer-events: none;
+      }
+      .app-content {
+        position: relative;
+        z-index: 2;
+      }
+      .card, .glass-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+    </style>
+  </head>
+  <body class="bg-black text-slate-100 antialiased font-['Inter',sans-serif] selection:bg-sky-500/30 selection:text-sky-950 min-h-screen">
+    <noscript>
+      <video
+        class="background-video"
+        autoplay
+        muted
+        loop
+        playsinline
+      >
+        <source src="/your-uploaded-video.mp4" type="video/mp4">
+        <source src="/background-video.mp4" type="video/mp4">
+      </video>
+      <div class="video-overlay background-overlay"></div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

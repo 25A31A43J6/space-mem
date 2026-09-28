@@ -1,0 +1,325 @@
+[
+  {
+    "auditId": "AUDIT-15170251",
+    "investigationId": "INV-170251",
+    "timestamp": "2026-09-28T17:06:10.252Z",
+    "currentCase": {
+      "caseId": "DEMO-FLEET-03",
+      "satellite": "HelioOrbit-Constellation-4",
+      "component": "Hall Thruster XT-250 Anode Discharge Core",
+      "subsystem": "Propulsion (PROP)",
+      "testType": "Thermal Vacuum (TVAC)",
+      "severity": "CRITICAL",
+      "temperature": -40,
+      "voltage": 310,
+      "current": 4.6,
+      "pressure": "8.5e-7 Torr",
+      "vibration": "0.0 g RMS",
+      "errorCodes": "ERR_PROP_DISCHARGE_LOST, XENON_CHOKE_ERR",
+      "symptoms": "Thruster plasma flame-out at T+7s during cold plateau startup with line pressure fluctuation."
+    },
+    "retrievedMemoryIds": [
+      "CASE-2026-XENON-02",
+      "CASE-2026-XENON-01",
+      "CASE-008",
+      "CASE-001"
+    ],
+    "memorySource": "LOCAL DEMO MEMORY",
+    "similarityScores": {
+      "CASE-2026-XENON-02": 0.8,
+      "CASE-2026-XENON-01": 0.8,
+      "CASE-008": 0.4,
+      "CASE-001": 0.25
+    },
+    "evidenceCategories": {
+      "currentCaseObservations": [
+        "Spacecraft: HelioOrbit-Constellation-4, Subsystem: Propulsion (PROP), Component: Hall Thruster XT-250 Anode Discharge Core",
+        "Test Environment: Thermal Vacuum (TVAC) at -40°C, 310V bus, 4.6A, Chamber: 8.5e-7 Torr, Vibe: 0.0 g RMS",
+        "Observed Symptoms: Thruster plasma flame-out at T+7s during cold plateau startup with line pressure fluctuation.",
+        "Reported Telemetry Delta: Discharge impedance collapsed from 68Ω to 1.8Ω at -40°C. Mass flow telemetry showed acoustic ripple signature.",
+        "Triggered Error Codes: ERR_PROP_DISCHARGE_LOST, XENON_CHOKE_ERR"
+      ],
+      "historicalEvidence": [
+        "[HISTORICAL EVIDENCE] CASE-2026-XENON-02 telemetry: discharge impedance fell from 68 Ω to 1.8 Ω at T+6 s, temperature –42 °C, line pressure fluctuation observed.",
+        "[HISTORICAL EVIDENCE] CASE-2026-XENON-01 telemetry: discharge impedance collapse within 8 s, temperature –45 °C, mass‑flow pressure spike recorded."
+      ],
+      "aiHypotheses": [
+        "[GROQ HYPOTHESIS] Xenon propellant condensation in the anode feed manifold due to insufficient pre‑heat at -40 °C",
+        "[GROQ HYPOTHESIS] Inadequate thermal control of cathode feed line leading to possible secondary choke"
+      ],
+      "engineerValidationRequired": [
+        "Human engineer verification required before operational action.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED."
+      ]
+    },
+    "aiHypotheses": [
+      "[GROQ HYPOTHESIS] Xenon propellant condensation in the anode feed manifold due to insufficient pre‑heat at -40 °C",
+      "[GROQ HYPOTHESIS] Inadequate thermal control of cathode feed line leading to possible secondary choke"
+    ],
+    "recommendations": [
+      "Instrument anode feed manifold temperature and verify >+10 °C before ignition: Directly confirms whether xenon condensation is occurring, mirroring the diagnostic step that identified the root cause in CASE‑2026‑XENON‑02.",
+      "Install dual‑zone 2 W Kapton foil heater strips on anode and cathode feed manifolds: Proven corrective action that eliminated xenon condensation in both historical cases.",
+      "Execute three repeat TVAC cold‑plateau ignitions with the new pre‑heat cycle: Statistical confirmation of mitigation, as demonstrated in CASE‑2026‑XENON-01 (20 consecutive successes)."
+    ],
+    "engineerValidationStatus": "PENDING_REVIEW"
+  },
+  {
+    "auditId": "AUDIT-14312257",
+    "investigationId": "INV-312257",
+    "timestamp": "2026-09-28T16:51:52.257Z",
+    "currentCase": {
+      "satellite": "Orbital-Sat-4",
+      "component": "PCDU Main Bus Regulator",
+      "subsystem": "Power & PCDU",
+      "testType": "Thermal Vacuum (TVAC)",
+      "severity": "Critical",
+      "temperature": -25,
+      "voltage": 22.4,
+      "current": 4.2,
+      "pressure": "1.2e-6 Torr",
+      "vibration": "0.02 g2/Hz",
+      "errorCodes": "ERR_PCDU_UNDERVOLT_0x44",
+      "symptoms": "Oscillation observed on secondary shunt stage under sub-zero transition"
+    },
+    "retrievedMemoryIds": [
+      "CASE-001",
+      "VAL-TEST-001",
+      "CASE-010",
+      "CASE-006"
+    ],
+    "memorySource": "LOCAL DEMO MEMORY",
+    "similarityScores": {
+      "CASE-001": 0.7,
+      "VAL-TEST-001": 0.35,
+      "CASE-010": 0.35,
+      "CASE-006": 0.3
+    },
+    "evidenceCategories": {
+      "currentCaseObservations": [
+        "Spacecraft: Orbital-Sat-4, Subsystem: Power & PCDU, Component: PCDU Main Bus Regulator",
+        "Test Environment: Thermal Vacuum (TVAC) at -25°C, 22.4V bus, 4.2A, Chamber: 1.2e-6 Torr, Vibe: 0.02 g2/Hz",
+        "Observed Symptoms: Oscillation observed on secondary shunt stage under sub-zero transition",
+        "Reported Telemetry Delta: Main 28V bus dropped to 22.4V during cold soak",
+        "Triggered Error Codes: ERR_PCDU_UNDERVOLT_0x44"
+      ],
+      "historicalEvidence": [
+        "[HISTORICAL EVIDENCE] CASE-001 (AeroSat-4B): MOSFET gate driver damping resistor (4.7Ω) was inadequate at cryogenic temperatures, causing undamped parasitic oscillation and bus voltage drop."
+      ],
+      "aiHypotheses": [
+        "[GROQ HYPOTHESIS] Inadequate MOSFET gate‑drive damping resistor value at –25 °C",
+        "[GROQ HYPOTHESIS] Loop compensation not retuned for cryogenic temperature (capacitor value insufficient)"
+      ],
+      "engineerValidationRequired": [
+        "Human engineer verification required before operational action.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED."
+      ]
+    },
+    "aiHypotheses": [
+      "[GROQ HYPOTHESIS] Inadequate MOSFET gate‑drive damping resistor value at –25 °C",
+      "[GROQ HYPOTHESIS] Loop compensation not retuned for cryogenic temperature (capacitor value insufficient)"
+    ],
+    "recommendations": [
+      "Measure and verify gate‑drive damping resistor value and temperature coefficient at –25 °C: Directly tests the primary hypothesis that resistor value drops or its effective damping degrades at cryogenic temperature.",
+      "Replace gate‑drive damping resistor with a higher value (e.g., 15 Ω) and adjust loop‑compensation capacitor to 2.2 nF COG: Matches the corrective action that eliminated the oscillation in CASE‑001."
+    ],
+    "engineerValidationStatus": "PENDING_REVIEW"
+  },
+  {
+    "auditId": "AUDIT-13679737",
+    "investigationId": "INV-679737",
+    "timestamp": "2026-09-28T16:41:19.737Z",
+    "currentCase": {
+      "caseId": "DEMO-NEXTGEN-02",
+      "satellite": "DeepSpace-Explorer-2",
+      "component": "Hall Thruster XT-250 High-Power Anode",
+      "subsystem": "Propulsion (PROP)",
+      "testType": "Thermal Vacuum (TVAC)",
+      "severity": "CRITICAL",
+      "temperature": -42,
+      "voltage": 320,
+      "current": 4.8,
+      "pressure": "9.2e-7 Torr",
+      "vibration": "0.0 g RMS",
+      "errorCodes": "ERR_PROP_DISCHARGE_LOST, XENON_LINE_PULSE",
+      "symptoms": "Thruster plasma flame-out 6 seconds into cold vacuum startup."
+    },
+    "retrievedMemoryIds": [
+      "CASE-2026-XENON-01",
+      "CASE-008",
+      "CASE-001",
+      "CASE-009"
+    ],
+    "memorySource": "LOCAL DEMO MEMORY",
+    "similarityScores": {
+      "CASE-2026-XENON-01": 0.8,
+      "CASE-008": 0.4,
+      "CASE-001": 0.2,
+      "CASE-009": 0.2
+    },
+    "evidenceCategories": {
+      "currentCaseObservations": [
+        "Spacecraft: DeepSpace-Explorer-2, Subsystem: Propulsion (PROP), Component: Hall Thruster XT-250 High-Power Anode",
+        "Test Environment: Thermal Vacuum (TVAC) at -42°C, 320V bus, 4.8A, Chamber: 9.2e-7 Torr, Vibe: 0.0 g RMS",
+        "Observed Symptoms: Thruster plasma flame-out 6 seconds into cold vacuum startup.",
+        "Reported Telemetry Delta: Cathode ignition pulse struck successfully but anode arc extinguished as temperature settled at -42°C. Mass flow fluctuating.",
+        "Triggered Error Codes: ERR_PROP_DISCHARGE_LOST, XENON_LINE_PULSE"
+      ],
+      "historicalEvidence": [
+        "[DEMO/FALLBACK] CASE-2026-XENON-01 (Astro-Probe-9): Cryogenic propellant liquefaction in cathode pre-choke valve at -45°C due to inadequate heater duty cycle, causing liquid xenon slugging that choked plasma discharge."
+      ],
+      "aiHypotheses": [
+        "[GROQ HYPOTHESIS] Cryogenic propellant liquefaction in cathode pre-choke valve at -45°C due to inadequate heater duty cycle, causing liquid xenon slugging that choked plasma discharge."
+      ],
+      "engineerValidationRequired": [
+        "Human engineer verification required before operational action.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Do not modify operational thresholds on flight hardware.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Ground all test fixtures for ESD protection before attaching probes.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Do not exceed chamber temperature ramp rates (max 3°C/min).",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. All hardware modifications require formal Engineering Change Order (ECO) sign-off."
+      ]
+    },
+    "aiHypotheses": [
+      "[GROQ HYPOTHESIS] Cryogenic propellant liquefaction in cathode pre-choke valve at -45°C due to inadequate heater duty cycle, causing liquid xenon slugging that choked plasma discharge."
+    ],
+    "recommendations": [
+      "Probe Hall Thruster XT-250 High-Power Anode Telemetry Node Against Baseline: Historical case CASE-2026-XENON-01 demonstrated early signal variance prior to protection trip.",
+      "Inspect Component Internal Stage (Avoid Repeating Past Failed Lead): In CASE-2026-XENON-01, engineers initially attempted: \"Increasing anode voltage from 300V to 350V and swapping external flow controller cabling failed to prevent extinction.\", wasting critical test hours without resolving the issue.",
+      "Characterize Thermal & Electrical Boundary Margins (-42°C): Temperature conditions directly trigger circuit boundary oscillations (Under cryogenic TVAC (< -20°C), Hall Thruster xenon lines must be thermally conditioned above gas condensation threshold before ignition.).",
+      "Formulate Corrective Action Following Validated Precedent: In CASE-2026-XENON-01, the verified corrective action was: \"Programmed a mandatory 15-minute cathode heater pre-warm sequence (maintaining cathode valve > +10°C) prior to applying anode ignition voltage pulse.\"."
+    ],
+    "engineerValidationStatus": "PENDING_REVIEW"
+  },
+  {
+    "auditId": "AUDIT-13655799",
+    "investigationId": "INV-655799",
+    "timestamp": "2026-09-28T16:40:55.799Z",
+    "currentCase": {
+      "caseId": "DEMO-NOVEL-01",
+      "satellite": "Astro-Probe-9",
+      "component": "Hall Thruster XT-200 Anode",
+      "subsystem": "Propulsion (PROP)",
+      "testType": "Thermal Vacuum (TVAC)",
+      "severity": "CRITICAL",
+      "temperature": -45,
+      "voltage": 300,
+      "current": 4.5,
+      "pressure": "8.0e-7 Torr",
+      "vibration": "0.0 g RMS",
+      "errorCodes": "ERR_PROP_DISCHARGE_LOST, ANODE_FLAME_OUT",
+      "symptoms": "Anode plasma discharge extinction within 8 seconds of ignition command."
+    },
+    "retrievedMemoryIds": [
+      "CASE-008",
+      "CASE-001",
+      "CASE-009",
+      "VAL-TEST-001"
+    ],
+    "memorySource": "LOCAL DEMO MEMORY",
+    "similarityScores": {
+      "CASE-008": 0.4,
+      "CASE-001": 0.2,
+      "CASE-009": 0.2,
+      "VAL-TEST-001": 0.15
+    },
+    "evidenceCategories": {
+      "currentCaseObservations": [
+        "Spacecraft: Astro-Probe-9, Subsystem: Propulsion (PROP), Component: Hall Thruster XT-200 Anode",
+        "Test Environment: Thermal Vacuum (TVAC) at -45°C, 300V bus, 4.5A, Chamber: 8.0e-7 Torr, Vibe: 0.0 g RMS",
+        "Observed Symptoms: Anode plasma discharge extinction within 8 seconds of ignition command.",
+        "Reported Telemetry Delta: Discharge current collapsed from 4.5A to 0.08A immediately following high-voltage pulse. Propellant mass flow showed pressure spike.",
+        "Triggered Error Codes: ERR_PROP_DISCHARGE_LOST, ANODE_FLAME_OUT"
+      ],
+      "historicalEvidence": [
+        "No sufficiently similar historical memory was found in the engineering memory bank (all database matches scored below the 0.50 aerospace relevance threshold)."
+      ],
+      "aiHypotheses": [
+        "[GROQ HYPOTHESIS] Unprecedented Hall Thruster XT-200 Anode anomaly requiring first-principles isolation"
+      ],
+      "engineerValidationRequired": [
+        "Human engineer verification required before operational action.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Verify test equipment grounding before proceeding.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Ensure proper current-limiting on ground bench supply.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Subsystem Lead Engineer review required."
+      ]
+    },
+    "aiHypotheses": [
+      "[GROQ HYPOTHESIS] Unprecedented Hall Thruster XT-200 Anode anomaly requiring first-principles isolation"
+    ],
+    "recommendations": [
+      "Establish Telemetry Baseline for Hall Thruster XT-200 Anode: No historical precedent exists in memory bank. Immediate priority is isolating anomalous behavior from test equipment noise.",
+      "Perform Isolated Subsystem Bench Characterization: Isolate component from spacecraft bus to determine if anomaly is internal or interface-driven.",
+      "Review Subsystem Design Margins against ECSS/NASA Standards: Evaluate component operating parameters against worst-case environmental qualification envelopes."
+    ],
+    "engineerValidationStatus": "PENDING_REVIEW"
+  },
+  {
+    "auditId": "AUDIT-13629802",
+    "investigationId": "INV-629802",
+    "timestamp": "2026-09-28T16:40:29.802Z",
+    "currentCase": {
+      "satellite": "AeroSat-TestSat",
+      "component": "Power Control & Distribution Unit (PCDU)",
+      "subsystem": "Electrical Power (EPS)",
+      "testType": "Thermal Vacuum (TVAC)",
+      "severity": "HIGH",
+      "temperature": -25,
+      "voltage": 28,
+      "current": 2.5,
+      "pressure": "Hard Vacuum",
+      "vibration": "0 g RMS",
+      "errorCodes": "ERR_UVLO_28V, ERR_RIPPLE_HIGH",
+      "symptoms": "Main bus 28V dropped to 23.4V with severe 680mV ripple under cold soak"
+    },
+    "retrievedMemoryIds": [
+      "CASE-001",
+      "CASE-006",
+      "VAL-TEST-001",
+      "CASE-010"
+    ],
+    "memorySource": "LOCAL DEMO MEMORY",
+    "similarityScores": {
+      "CASE-001": 0.85,
+      "CASE-006": 0.65,
+      "VAL-TEST-001": 0.55,
+      "CASE-010": 0.55
+    },
+    "evidenceCategories": {
+      "currentCaseObservations": [
+        "Spacecraft: AeroSat-TestSat, Subsystem: Electrical Power (EPS), Component: Power Control & Distribution Unit (PCDU)",
+        "Test Environment: Thermal Vacuum (TVAC) at -25°C, 28V bus, 2.5A, Chamber: Hard Vacuum, Vibe: 0 g RMS",
+        "Observed Symptoms: Main bus 28V dropped to 23.4V with severe 680mV ripple under cold soak",
+        "Reported Telemetry Delta: Anomaly only occurs when baseplate temperature falls below -18C",
+        "Triggered Error Codes: ERR_UVLO_28V, ERR_RIPPLE_HIGH"
+      ],
+      "historicalEvidence": [
+        "[DEMO/FALLBACK] CASE-001 (AeroSat-4B): MOSFET gate driver damping resistor value (4.7Ω) was inadequate at cryogenic temperatures due to reduced channel resistance and temperature coefficient of gate drivers, leading to undamped parasitic oscillation.",
+        "[DEMO/FALLBACK] CASE-006 (AeroSat-4A): Sense resistor choice lacked zero-TCR specification and comparator hysteresis was insufficient to reject inrush ripple under cold temperatures.",
+        "[DEMO/FALLBACK] VAL-TEST-001 (Validation-Sat-1): Verified test injection",
+        "[DEMO/FALLBACK] CASE-010 (AeroSat-4B): Unqualified fluorosilicone grease used in adjacent gearhead outgassed under high vacuum and deposited a high-resistance insulating dielectric film on the gold slip ring tracks."
+      ],
+      "aiHypotheses": [
+        "[GROQ HYPOTHESIS] MOSFET gate driver damping resistor value (4.7Ω) was inadequate at cryogenic temperatures due to reduced channel resistance and temperature coefficient of gate drivers, leading to undamped parasitic oscillation."
+      ],
+      "engineerValidationRequired": [
+        "Human engineer verification required before operational action.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Do not modify operational thresholds on flight hardware.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Ground all test fixtures for ESD protection before attaching probes.",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. Do not exceed chamber temperature ramp rates (max 3°C/min).",
+        "AI-SUPPORTED RECOMMENDATION — HUMAN ENGINEER VERIFICATION REQUIRED. All hardware modifications require formal Engineering Change Order (ECO) sign-off."
+      ]
+    },
+    "aiHypotheses": [
+      "[GROQ HYPOTHESIS] MOSFET gate driver damping resistor value (4.7Ω) was inadequate at cryogenic temperatures due to reduced channel resistance and temperature coefficient of gate drivers, leading to undamped parasitic oscillation."
+    ],
+    "recommendations": [
+      "Probe Power Control & Distribution Unit (PCDU) Telemetry Node Against Baseline: Historical case CASE-001 demonstrated early signal variance prior to protection trip.",
+      "Inspect Component Internal Stage (Avoid Repeating Past Failed Lead): In CASE-001, engineers initially attempted: \"Replacing the external chamber harness and recalibrating GSE was attempted first—it consumed 36 test hours and completely failed to fix the anomaly.\", wasting critical test hours without resolving the issue.",
+      "Characterize Thermal & Electrical Boundary Margins (-25°C): Temperature conditions directly trigger circuit boundary oscillations (Always evaluate power converter gate-drive damping and loop stability at worst-case cryogenic boundary temperatures, not merely room temperature.).",
+      "Formulate Corrective Action Following Validated Precedent: In CASE-001, the verified corrective action was: \"Increased gate drive damping resistor RG from 4.7Ω to 15Ω and adjusted loop compensation capacitor from 1.2nF to 2.2nF COG dielectric.\"."
+    ],
+    "engineerValidationStatus": "PENDING_REVIEW"
+  }
+]

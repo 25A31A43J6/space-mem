@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix SPACE-MEM — Spacecraft Failure Memory \u0026 Investigation Assistant",
+  "description": "AI-powered engineering memory and anomaly investigation platform for spacecraft and satellite testing. Transforming historical failures into reusable experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
